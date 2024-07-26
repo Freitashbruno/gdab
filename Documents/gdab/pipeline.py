@@ -25,6 +25,9 @@ def run():
          | 'Ler mensagens do Pub/Sub' >> beam.io.ReadFromPubSub(subscription='projects/gdab-430616/subscriptions/gdab')
          | 'Parsear JSON' >> beam.Map(parse_json)
          | 'Aplicar Janelas' >> beam.WindowInto(FixedWindows(60))  # Aplicar janelas de 1 minuto
+         | 'Mapear com Chave' >> beam.Map(lambda record: (record['id'], record))
+         | 'Agrupar por Chave' >> beam.GroupByKey()
+         | 'Remover Chave' >> beam.FlatMap(lambda x: x[1])
          | 'Salvar no BigQuery' >> beam.io.WriteToBigQuery(
              'gdab-430616:gdab.gdab',
              schema='id:STRING, name:STRING, email:STRING, timestamp:TIMESTAMP',
