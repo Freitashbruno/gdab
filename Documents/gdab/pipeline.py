@@ -1,6 +1,7 @@
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.transforms.window import FixedWindows, AfterProcessingTime, AccumulationMode
+from apache_beam.transforms.window import FixedWindows
+from apache_beam.transforms.trigger import AfterProcessingTime, AccumulationMode, Repeatedly, AfterWatermark, AfterCount
 import json
 
 def run():
@@ -24,7 +25,10 @@ def run():
         (p 
          | 'Ler mensagens do Pub/Sub' >> beam.io.ReadFromPubSub(subscription='projects/gdab-430616/subscriptions/gdab')
          | 'Parsear JSON' >> beam.Map(parse_json)
-         | 'Aplicar Janelas' >> beam.WindowInto(FixedWindows(60), trigger=AfterProcessingTime(1), accumulation_mode=AccumulationMode.DISCARDING)
+         | 'Aplicar Janelas' >> beam.WindowInto(
+             FixedWindows(60),
+             trigger=Repeatedly(AfterProcessingTime(1)),
+             accumulation_mode=AccumulationMode.DISCARDING)
          | 'Mapear com Chave' >> beam.Map(lambda record: (record['id'], record))
          | 'Agrupar por Chave' >> beam.GroupByKey()
          | 'Remover Chave' >> beam.FlatMap(lambda x: x[1])
