@@ -1,7 +1,7 @@
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.window import FixedWindows
-from apache_beam.transforms.trigger import AfterProcessingTime, AccumulationMode, Repeatedly, AfterWatermark, AfterCount
+from apache_beam.transforms.trigger import AfterProcessingTime, AccumulationMode, Repeatedly
 import json
 
 def run():
@@ -29,9 +29,6 @@ def run():
              FixedWindows(60),
              trigger=Repeatedly(AfterProcessingTime(1)),
              accumulation_mode=AccumulationMode.DISCARDING)
-         | 'Mapear com Chave' >> beam.Map(lambda record: (record['id'], record))
-         | 'Agrupar por Chave' >> beam.GroupByKey()
-         | 'Remover Chave' >> beam.FlatMap(lambda x: x[1])
          | 'Salvar no BigQuery' >> beam.io.WriteToBigQuery(
              'gdab-430616:gdab.gdab',
              schema='id:STRING, name:STRING, email:STRING, timestamp:TIMESTAMP',
